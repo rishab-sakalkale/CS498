@@ -15,7 +15,7 @@ def reduce_scatter(chunks, tmp, world, rank, left, right):
         send_idx = (rank - step) % world
         recv_idx = (rank - step - 1) % world
         
-        send_req = dist.isend(chunks[send_idx], dst=left)
+        send_req = dist.isend(chunks[send_idx].contiguous(), dst=left)
         recv_req = dist.irecv(tmp, src=right)
         
         send_req.wait()
@@ -30,8 +30,8 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
     #                                                                   #
     #                                                                   #
     for step in range(world - 1):
-        send_idx = (rank - step) % world
-        recv_idx = (rank - step - 1) % world
+        send_idx = (rank - step - 1) % world
+        recv_idx = (rank - step - 2) % world
 
         send_req = dist.isend(chunks[send_idx].contiguous(), dst=left)
         
@@ -68,7 +68,11 @@ def ring_allreduce_(tensor: torch.Tensor, world_size = None, rankid = None):
     total_size = chunk * world
     padding_size = total_size - n
     
-    padded_flat = torch.cat([flat, torch.zeros(padding_size, dtype=flat.dtype, device=flat.device)])
+    # Pad if necessary
+    if padding_size > 0:
+        padded_flat = torch.cat([flat, torch.zeros(padding_size, dtype=flat.dtype, device=flat.device)])
+    else:
+        padded_flat = flat.clone()
 
     chunks = [padded_flat[i*chunk:(i+1)*chunk] for i in range(world)]
 
