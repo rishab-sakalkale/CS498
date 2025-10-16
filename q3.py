@@ -31,7 +31,7 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
     #                                                                   #
     tmp = torch.zeros_like(chunks[0])
     
-    for step in range(world - 1):        
+    for i in range(world - 1):        
         recv_idx = (rank - i) % world
         send_idx = (rank - i + 1) % world
         
