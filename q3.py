@@ -64,7 +64,7 @@ def ring_allreduce_(tensor: torch.Tensor, world_size = None, rankid = None):
     # padding_size = total_size - n
 
     # padded_flat = None # modify this line and fill correct value into padded_flat
-    total_size = chunk_size * world
+    total_size = chunk * world
     padding_size = total_size - n
     
     padded_flat = torch.cat([flat, torch.zeros(padding_size, dtype=flat.dtype, device=flat.device)])
