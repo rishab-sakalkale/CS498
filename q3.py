@@ -30,15 +30,16 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
     #                                                                   #
     #                                                                   #
     for step in range(world - 1):
-        send_idx = (rank - step + 1) % world
-        recv_idx = (rank - step) % world
+        send_idx = (rank - step) % world
+        recv_idx = (rank - step - 1) % world
 
-        send_req = dist.isend(chunks[send_idx], dst=left)
+        send_req = dist.isend(chunks[send_idx].contiguous(), dst=left)
+        
         recv_req = dist.irecv(tmp, src=right)
-
-        send_req.wait()
+        
         recv_req.wait()
-
+        send_req.wait()
+        
         chunks[recv_idx].copy_(tmp)
 
 def ring_allreduce_(tensor: torch.Tensor, world_size = None, rankid = None):
