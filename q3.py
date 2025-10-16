@@ -11,12 +11,12 @@ def reduce_scatter(chunks, tmp, world, rank, left, right):
     # your code here: follow slides instruction: do counter-clockwise iteration
     #                                                                   #
     #                                                                   #
-    for step in range(world - 1):
-        send_idx = (rank - step) % world
-        recv_idx = (rank - step - 1) % world
+    for i in range(world - 1):
+        send_idx = (rank - i) % world
+        recv_idx = (rank - i - 1) % world
         
-        send_req = dist.isend(chunks[send_idx].contiguous(), dst=left)
-        recv_req = dist.irecv(tmp, src=right)
+        recv_req = dist.irecv(tmp, src=left)
+        send_req = dist.isend(chunks[send_idx].clone(), dst=right)
         
         send_req.wait()
         recv_req.wait()
@@ -28,9 +28,7 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
     #                                                                   #
     # your code here: follow slides instruction: do counter-clockwise iteration
     #                                                                   #
-    #                                                                   #
-    tmp = torch.zeros_like(chunks[0])
-    
+    #                                                                   #    
     for i in range(world - 1):        
         recv_idx = (rank - i) % world
         send_idx = (rank - i + 1) % world
