@@ -15,11 +15,11 @@ def reduce_scatter(chunks, tmp, world, rank, left, right):
         sender = (rank - i) % world
         reciever = (rank - i - 1) % world
         
-        recv_req = dist.irecv(tmp, src=left)
-        send_req = dist.isend(chunks[sender].contiguous(), dst=right)
+        reciever_req = dist.irecv(tmp, src=left)
+        sender_req = dist.isend(chunks[sender].contiguous(), dst=right)
         
-        send_req.wait()
-        recv_req.wait()
+        sender_req.wait()
+        reciever_req.wait()
         
         chunks[reciever] += tmp
         
@@ -33,11 +33,11 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
         reciever = (rank - i) % world
         sender = (rank - i + 1) % world
         
-        send_req = dist.isend(chunks[sender].contiguous(), dst=right)
-        recv_req = dist.irecv(tmp, src=left)
+        sender_req = dist.isend(chunks[sender].contiguous(), dst=right)
+        reciever_req = dist.irecv(tmp, src=left)
         
-        recv_req.wait()
-        send_req.wait()
+        reciever_req.wait()
+        sender_req.wait()
         
         chunks[reciever].copy_(tmp)
 
