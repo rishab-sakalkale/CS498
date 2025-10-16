@@ -29,13 +29,16 @@ def all_gather(chunks, tmp, current, world, rank, left, right):
     # your code here: follow slides instruction: do counter-clockwise iteration
     #                                                                   #
     #                                                                   #
-    for step in range(world - 1):
-        send_idx = (rank - step - 1) % world
-        recv_idx = (rank - step - 2) % world
-
-        send_req = dist.isend(chunks[send_idx].contiguous(), dst=left)
+    tmp = torch.zeros_like(chunks[0])
+    
+    for step in range(world - 1):        
+        recv_idx = (rank - i) % world
+        send_idx = (rank - i + 1) % world
         
-        recv_req = dist.irecv(tmp, src=right)
+        buff = chunks[send_idx].clone()
+
+        send_req = dist.isend(buff, dst=right)
+        recv_req = dist.irecv(tmp, src=left)
         
         recv_req.wait()
         send_req.wait()
